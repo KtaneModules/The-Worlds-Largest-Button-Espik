@@ -15,8 +15,9 @@ public class WorldsLargestButton : MonoBehaviour {
     public Material[] StateMaterials;
     public Material[] AlertMaterials;
 
-    public Renderer ButtonModel;
-    public TextMesh ButtonText;
+    public Renderer[] ButtonModel;
+    public Renderer[] ButtonTextModel;
+    public TextMesh[] ButtonText;
 
     // Logging info
     private static int moduleIdCounter = 1;
@@ -68,7 +69,11 @@ public class WorldsLargestButton : MonoBehaviour {
         GenerateColor(true);
 
         buttonText = LABELS[UnityEngine.Random.Range(0, LABELS.Length)];
-        ButtonText.text = buttonText;
+        ButtonText[0].text = buttonText;
+        ButtonText[1].text = buttonText;
+
+        ButtonModel[1].enabled = false;
+        ButtonTextModel[1].enabled = false;
 
         // Fixes the line break for logging
         if (buttonText == "Literally\nBlank")
@@ -77,7 +82,31 @@ public class WorldsLargestButton : MonoBehaviour {
         Debug.LogFormat("[The World's Largest Button #{0}] The button is {1} and says \"{2}\".", moduleId, COLORS[colorIndex], buttonText);
         Debug.LogFormat("[The World's Largest Button #{0}] Rule {1} from Step 1 applies.", moduleId, LogFirstStageRules());
 
-        sound = UnityEngine.Random.Range(0, 9);
+        sound = UnityEngine.Random.Range(0, 10);
+    }
+
+    
+    // Setting materials
+    private void SetMaterial(Material material) {
+        ButtonModel[0].material = material;
+        ButtonModel[1].material = material;
+    }
+
+    // Sets the button state
+    private void SetButtonState(bool state) {
+        if (state == true) {
+            ButtonModel[0].enabled = false;
+            ButtonModel[1].enabled = true;
+            ButtonTextModel[0].enabled = false;
+            ButtonTextModel[1].enabled = true;
+        }
+
+        else {
+            ButtonModel[0].enabled = true;
+            ButtonModel[1].enabled = false;
+            ButtonTextModel[0].enabled = true;
+            ButtonTextModel[1].enabled = false;
+        }
     }
 
 
@@ -85,7 +114,7 @@ public class WorldsLargestButton : MonoBehaviour {
     private void HoldButton() {
         Button.AddInteractionPunch(2.5f);
         PlayButtonSound();
-        //move the button down
+        SetButtonState(true);
 
         if (moduleSolved == false) {
             if (stagesCompleted == 0)
@@ -112,7 +141,7 @@ public class WorldsLargestButton : MonoBehaviour {
     private void ReleaseButton() {
         Button.AddInteractionPunch();
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonRelease, gameObject.transform);
-        //move the button up
+        SetButtonState(false);
 
         if (moduleSolved == false) {
             if (willStrike == false) {
@@ -183,7 +212,7 @@ public class WorldsLargestButton : MonoBehaviour {
     // Generate new button color
     private void GenerateColor(bool firstTime) {
         colorIndex = UnityEngine.Random.Range(0, COLORS.Length);
-        ButtonModel.material = ColorMaterials[colorIndex];
+        SetMaterial(ColorMaterials[colorIndex]);
 
         if (firstTime == false)
             Debug.LogFormat("[The World's Largest Button #{0}] The button's color is now {1}.", moduleId, COLORS[colorIndex]);
@@ -208,7 +237,7 @@ public class WorldsLargestButton : MonoBehaviour {
         if (random < 6) {
             newColorIndex = UnityEngine.Random.Range(0, COLORS.Length);
             newColor = COLORS[newColorIndex];
-            ButtonModel.material = ColorMaterials[newColorIndex];
+            SetMaterial(ColorMaterials[newColorIndex]);
             Debug.LogFormat("[The World's Largest Button #{0}] The held button is now {1}.", moduleId, COLORS[newColorIndex]);
         }
 
@@ -218,7 +247,7 @@ public class WorldsLargestButton : MonoBehaviour {
             newColor2Index = UnityEngine.Random.Range(0, COLORS.Length);
             newColor = COLORS[newColorIndex];
             newColor2 = COLORS[newColor2Index];
-            ButtonModel.material = ColorMaterials[newColorIndex];
+            SetMaterial(ColorMaterials[newColorIndex]);
 
             // If the two selected colors are the same
             if (newColor == newColor2)
@@ -249,7 +278,7 @@ public class WorldsLargestButton : MonoBehaviour {
         Debug.LogFormat("[The World's Largest Button #{0}] Strike!", moduleId);
         GetComponent<KMBombModule>().HandleStrike();
         canHoldButton = false;
-        ButtonModel.material = StateMaterials[0];
+        SetMaterial(StateMaterials[0]);
 
         yield return new WaitForSeconds(1.0f);
 
@@ -269,20 +298,20 @@ public class WorldsLargestButton : MonoBehaviour {
         GetComponent<KMBombModule>().HandlePass();
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, gameObject.transform);
         moduleSolved = true;
-        ButtonModel.material = StateMaterials[1];
+        SetMaterial(StateMaterials[1]);
     }
 
 
     // Button cycles between two colors
     private IEnumerator CycleTwoColors() {
         if (canCycleFlash == true) {
-            ButtonModel.material = ColorMaterials[newColorIndex];
+            SetMaterial(ColorMaterials[newColorIndex]);
             color2Flashing = false;
             yield return new WaitForSeconds(0.3f);
         }
 
         if (canCycleFlash == true) {
-            ButtonModel.material = ColorMaterials[newColor2Index];
+            SetMaterial(ColorMaterials[newColor2Index]);
             color2Flashing = true;
             yield return new WaitForSeconds(0.3f);
         }
@@ -294,27 +323,27 @@ public class WorldsLargestButton : MonoBehaviour {
     // Button alert mode
     private IEnumerator CycleAlert() {
         if (canCycleFlash == true) {
-            ButtonModel.material = AlertMaterials[0];
+            SetMaterial(AlertMaterials[0]);
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
-            ButtonModel.material = AlertMaterials[1];
+            SetMaterial(AlertMaterials[1]);
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
-            ButtonModel.material = AlertMaterials[2];
+            SetMaterial(AlertMaterials[2]);
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
-            ButtonModel.material = AlertMaterials[3];
+            SetMaterial(AlertMaterials[3]);
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
-            ButtonModel.material = AlertMaterials[4];
+            SetMaterial(AlertMaterials[4]);
             yield return new WaitForSeconds(0.1f);
         }
 
