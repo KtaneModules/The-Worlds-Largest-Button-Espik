@@ -145,10 +145,17 @@ public class WorldsLargestButton : MonoBehaviour {
 
         if (moduleSolved == false) {
             if (willStrike == false) {
-                willStrike = !ReleaseRules(newColorIndex);
+                // Alert mode
+                if (wasAlertMode == true) {
+                    willStrike = !alertModeGood;
+                }
 
-                if (twoColorsFlash == true)
-                    willStrike = !ReleaseRules(newColor2Index);
+                else {
+                    willStrike = !ReleaseRules(newColorIndex);
+
+                    if (twoColorsFlash == true)
+                        willStrike = !ReleaseRules(newColor2Index);
+                }
 
                 if (willStrike == true)
                     Debug.LogFormat("[The World's Largest Button #{0}] The button was released at an invalid time.", moduleId);
@@ -446,7 +453,7 @@ public class WorldsLargestButton : MonoBehaviour {
         case 5: if ((int)Bomb.GetTime() % 2 == 0 || (int)Bomb.GetTime() % 60 / 10 % 2 == 0) return true; break;
         case 6: if ((int)Bomb.GetTime() % 2 == 1 || (int)Bomb.GetTime() % 60 / 10 % 2 == 1) return true; break;
         case 7: if ((int)Bomb.GetTime() % 120 < 60) return true; break;
-        case 8: return alertModeGood;
+        case 8: return alertModeGood; break;
         default: if (Bomb.GetFormattedTime().Count(x => x == '4') > 0) return true; break;
         }
 
