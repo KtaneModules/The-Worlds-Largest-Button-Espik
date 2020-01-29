@@ -203,14 +203,14 @@ public class WorldsLargestButton : MonoBehaviour {
     private void PlayButtonSound() {
         switch (sound) {
         case 1: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonRelease, gameObject.transform); break;
-        case 2: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BriefcaseClose, gameObject.transform); break;
+        case 2: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BinderDrop, gameObject.transform); break;
         case 3: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BriefcaseOpen, gameObject.transform); break;
         case 4: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, gameObject.transform); break;
-        case 5: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, gameObject.transform); break;
-        case 6: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.FreeplayDeviceDrop, gameObject.transform); break;
-        case 7: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.MenuButtonPressed, gameObject.transform); break;
-        case 8: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.MenuDrop, gameObject.transform); break;
-        case 9: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Stamp, gameObject.transform); break;
+        case 5: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CapacitorPop, gameObject.transform); break;
+        case 6: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.MenuDrop, gameObject.transform); break;
+        case 7: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Stamp, gameObject.transform); break;
+        case 8: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.Switch, gameObject.transform); break;
+        case 9: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.WireSnip, gameObject.transform); break;
         default: Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonPress, gameObject.transform); break;
         }
     }
@@ -273,6 +273,7 @@ public class WorldsLargestButton : MonoBehaviour {
             wasAlertMode = true;
             alertModeGood = true;
             canCycleFlash = true;
+            newColorIndex = 8;
             Debug.LogFormat("[The World's Largest Button #{0}] The button is cycling between more than 2 colors. You have 10 seconds to release the button.", moduleId);
             StartCoroutine(CycleAlert());
             StartCoroutine(StartAlertCountdown());
@@ -453,7 +454,7 @@ public class WorldsLargestButton : MonoBehaviour {
         case 5: if ((int)Bomb.GetTime() % 2 == 0 || (int)Bomb.GetTime() % 60 / 10 % 2 == 0) return true; break;
         case 6: if ((int)Bomb.GetTime() % 2 == 1 || (int)Bomb.GetTime() % 60 / 10 % 2 == 1) return true; break;
         case 7: if ((int)Bomb.GetTime() % 120 < 60) return true; break;
-        case 8: return alertModeGood; break;
+        case 8: return alertModeGood;
         default: if (Bomb.GetFormattedTime().Count(x => x == '4') > 0) return true; break;
         }
 
@@ -538,14 +539,14 @@ public class WorldsLargestButton : MonoBehaviour {
     private string LogButtonSound() {
         switch (sound) {
         case 1: return "Big Button Release";
-        case 2: return "Briefcase Close";
+        case 2: return "Binder Drop";
         case 3: return "Briefcase Open";
         case 4: return "Button Press";
-        case 5: return "Button Release";
-        case 6: return "Freeplay Device Drop";
-        case 7: return "Menu Button Pressed";
-        case 8: return "Menu Drop";
-        case 9: return "Stamp";
+        case 5: return "Capacitor Pop";
+        case 6: return "Menu Drop";
+        case 7: return "Stamp";
+        case 8: return "Switch";
+        case 9: return "Wire Snip";
         default: return "Big Button Press";
         }
     }
