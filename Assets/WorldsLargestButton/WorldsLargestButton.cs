@@ -113,8 +113,8 @@ public class WorldsLargestButton : MonoBehaviour {
 
     // Holding the button
     private void HoldButton() {
-        if (ButtonModel[0].enabled == false)
-            return;
+        if (ButtonModel[0].enabled == false) return; // Cannot double hold
+
         Button.AddInteractionPunch(2.5f);
         PlayButtonSound();
         SetButtonState(true);
@@ -142,8 +142,8 @@ public class WorldsLargestButton : MonoBehaviour {
 
     // Releasing the button
     private void ReleaseButton() {
-        if (ButtonModel[0].enabled == true)
-            return;
+        if (ButtonModel[0].enabled == true) return; // Cannot double release
+
         Button.AddInteractionPunch();
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonRelease, gameObject.transform);
         SetButtonState(false);
@@ -623,7 +623,11 @@ public class WorldsLargestButton : MonoBehaviour {
             return 10;
     }
 
-    //twitch plays
+
+
+    // Twitch Plays support - made by eXish
+
+
     private bool timeIsShort(string yes)
     {
         if(yes.Length != 1)
@@ -925,7 +929,7 @@ public class WorldsLargestButton : MonoBehaviour {
                 yield break;
         }
         // Choose whether stage 2 and beyond should be the easy or hard way (50/50)
-        int rando = UnityEngine.Random.Range(0, 2);
+        int rando = 0; // set to alawys Easy Way - change to UnityEngine.Random.Range(0, 2) to get either
         if (rando == 0)
         {
             // Easy Way (Sound)
