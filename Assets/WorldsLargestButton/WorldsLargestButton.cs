@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
 
@@ -112,6 +113,8 @@ public class WorldsLargestButton : MonoBehaviour {
 
     // Holding the button
     private void HoldButton() {
+        if (ButtonModel[0].enabled == false)
+            return;
         Button.AddInteractionPunch(2.5f);
         PlayButtonSound();
         SetButtonState(true);
@@ -139,6 +142,8 @@ public class WorldsLargestButton : MonoBehaviour {
 
     // Releasing the button
     private void ReleaseButton() {
+        if (ButtonModel[0].enabled == true)
+            return;
         Button.AddInteractionPunch();
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.BigButtonRelease, gameObject.transform);
         SetButtonState(false);
@@ -616,5 +621,443 @@ public class WorldsLargestButton : MonoBehaviour {
 
         else
             return 10;
+    }
+
+    //twitch plays
+    private bool timeIsShort(string yes)
+    {
+        if(yes.Length != 1)
+        {
+            return false;
+        }
+        int temp = 0;
+        bool check = int.TryParse(yes, out temp);
+        if (check)
+        {
+            if (temp > -1 && temp < 10)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool timeIsNotAsShort(string yes)
+    {
+        if (yes.Length != 2)
+        {
+            return false;
+        }
+        int temp = 0;
+        bool check = int.TryParse(yes, out temp);
+        if (check)
+        {
+            if (temp > -1 && temp < 60)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool timeIsLonger(string yes)
+    {
+        if (yes.Length != 4)
+        {
+            return false;
+        }
+        if (Regex.IsMatch(yes, @"^\s*[0-9]:[0-5][0-9]\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool timeIsLongest(string yes)
+    {
+        if (yes.Length != 5)
+        {
+            return false;
+        }
+        if (Regex.IsMatch(yes, @"^\s*[0-5][0-9]:[0-5][0-9]\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} hold/release XX:XX/X:XX/XX/X [Holds or releases the button at the specified time (XX:XX/#X:XX/##:XX/##:#X)]";
+    #pragma warning restore 414
+    IEnumerator ProcessTwitchCommand(string command)
+    {
+        string[] parameters = command.Split(' ');
+        if (Regex.IsMatch(parameters[0], @"^\s*hold\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            if (ButtonModel[0].enabled == false)
+            {
+                yield return "sendtochaterror The button is already being held!";
+                yield break;
+            }   
+            if (parameters.Length == 1)
+            {
+                Button.OnInteract();
+            }
+            else if(parameters.Length == 2)
+            {
+                if (timeIsShort(parameters[1]))
+                {
+                    int temp = 0;
+                    int.TryParse(parameters[1], out temp);
+                    yield return "sendtochat Holding the button at \"##:#"+parameters[1]+"\"!";
+                    while (((int)Bomb.GetTime() % 10) != temp)
+                    {
+                        yield return "trycancel Waiting to hold the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsNotAsShort(parameters[1]))
+                {
+                    int temp = 0;
+                    int.TryParse(parameters[1], out temp);
+                    yield return "sendtochat Holding the button at \"##:"+parameters[1]+"\"!";
+                    while (((int)Bomb.GetTime() % 60) != temp)
+                    {
+                        yield return "trycancel Waiting to hold the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsLonger(parameters[1]))
+                {
+                    int temp = 0;
+                    int temp2 = 0;
+                    int.TryParse(parameters[1].Substring(0, 1), out temp);
+                    int.TryParse(parameters[1].Substring(2), out temp2);
+                    yield return "sendtochat Holding the button at \"#"+parameters[1]+"\"!";
+                    while (((int)Bomb.GetTime() % 600) != (temp2+(temp*60)))
+                    {
+                        yield return "trycancel Waiting to hold the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsLongest(parameters[1]))
+                {
+                    int temp = 0;
+                    int temp2 = 0;
+                    int.TryParse(parameters[1].Substring(0, 2), out temp);
+                    int.TryParse(parameters[1].Substring(3), out temp2);
+                    yield return "sendtochat Holding the button at \""+parameters[1]+"\"!";
+                    while (((int)Bomb.GetTime() % 3600) != (temp2 + (temp * 60)))
+                    {
+                        yield return "trycancel Waiting to hold the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else
+                {
+                    yield return "sendtochaterror The specified time to hold the button at \"" + parameters[1] + "\" is invalid!";
+                    yield break;
+                }
+                Button.OnInteract();
+            }
+            else
+            {
+                yield return "sendtochaterror Too many parameters!";
+            }
+            yield break;
+        }
+        if (Regex.IsMatch(parameters[0], @"^\s*release\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        {
+            yield return null;
+            if (ButtonModel[0].enabled == true)
+            {
+                yield return "sendtochaterror The button is not being held!";
+                yield break;
+            }
+            if (parameters.Length == 1)
+            {
+                Button.OnInteractEnded();
+            }
+            else if (parameters.Length == 2)
+            {
+                if (timeIsShort(parameters[1]))
+                {
+                    int temp = 0;
+                    int.TryParse(parameters[1], out temp);
+                    yield return "sendtochat Releasing the button at \"##:#" + parameters[1] + "\"!";
+                    while (((int)Bomb.GetTime() % 10) != temp)
+                    {
+                        yield return "trycancel Waiting to release the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsNotAsShort(parameters[1]))
+                {
+                    int temp = 0;
+                    int.TryParse(parameters[1], out temp);
+                    yield return "sendtochat Releasing the button at \"##:" + parameters[1] + "\"!";
+                    while (((int)Bomb.GetTime() % 60) != temp)
+                    {
+                        yield return "trycancel Waiting to release the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsLonger(parameters[1]))
+                {
+                    int temp = 0;
+                    int temp2 = 0;
+                    int.TryParse(parameters[1].Substring(0, 1), out temp);
+                    int.TryParse(parameters[1].Substring(2), out temp2);
+                    yield return "sendtochat Releasing the button at \"#" + parameters[1] + "\"!";
+                    while (((int)Bomb.GetTime() % 600) != (temp2 + (temp * 60)))
+                    {
+                        yield return "trycancel Waiting to release the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (timeIsLongest(parameters[1]))
+                {
+                    int temp = 0;
+                    int temp2 = 0;
+                    int.TryParse(parameters[1].Substring(0, 2), out temp);
+                    int.TryParse(parameters[1].Substring(3), out temp2);
+                    yield return "sendtochat Releasing the button at \"" + parameters[1] + "\"!";
+                    while (((int)Bomb.GetTime() % 3600) != (temp2 + (temp * 60)))
+                    {
+                        yield return "trycancel Waiting to release the button has been halted due to a request to cancel!";
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else
+                {
+                    yield return "sendtochaterror The specified time to release the button at \""+parameters[1]+"\" is invalid!";
+                    yield break;
+                }
+                Button.OnInteractEnded();
+            }
+            else
+            {
+                yield return "sendtochaterror Too many parameters!";
+            }
+            yield break;
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        // If the button is on stage 1
+        if(stagesCompleted == 0)
+        {
+            // Wait for proper holding time
+            int rule = LogFirstStageRules();
+            if (rule == 3)
+            {
+                while (((int)Bomb.GetTime() % 60) != serialDigitSum)
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (rule == 4)
+            {
+                while (!primeNumbers.Contains(((int)Bomb.GetTime() % 60)))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (rule == 5)
+            {
+                while (((int)Bomb.GetTime() % 60) != 55 && ((int)Bomb.GetTime() % 60) != 44 && ((int)Bomb.GetTime() % 60) != 33 && ((int)Bomb.GetTime() % 60) != 22 && ((int)Bomb.GetTime() % 60) != 11 && ((int)Bomb.GetTime() % 60) != 0)
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (rule == 7)
+            {
+                while (((int)Bomb.GetTime() % 10) != (Bomb.GetStrikes() % 10))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (rule == 8)
+            {
+                while (((int)Bomb.GetTime() % 60) != (Bomb.GetSolvedModuleNames().Count() % 60))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else if (rule == 9)
+            {
+                while (((int)Bomb.GetTime() % 10) != 0 && ((int)Bomb.GetTime() % 10) != 2 && ((int)Bomb.GetTime() % 10) != 4 && ((int)Bomb.GetTime() % 10) != 6 && ((int)Bomb.GetTime() % 10) != 8)
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            Button.OnInteract();
+            yield return new WaitForSeconds(0.1f);
+            // Wait for proper release time
+            if (twoColorsFlash)
+            {
+                while (!ReleaseRules(newColorIndex) || !ReleaseRules(newColor2Index))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else
+            {
+                while (!ReleaseRules(newColorIndex))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            Button.OnInteractEnded();
+            yield return new WaitForSeconds(0.1f);
+            // If unicorn don't continue
+            if (rule == 1)
+                yield break;
+        }
+        // Choose whether stage 2 and beyond should be the easy or hard way (50/50)
+        int rando = UnityEngine.Random.Range(0, 2);
+        if (rando == 0)
+        {
+            // Easy Way (Sound)
+            // Wait for proper holding time
+            while (((int)Bomb.GetTime() % 10) != sound)
+            {
+                yield return true;
+                yield return new WaitForSeconds(0.1f);
+            }
+            Button.OnInteract();
+            yield return new WaitForSeconds(0.1f);
+            // Wait for proper release time
+            if (twoColorsFlash)
+            {
+                while (!ReleaseRules(newColorIndex) || !ReleaseRules(newColor2Index))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            else
+            {
+                while (!ReleaseRules(newColorIndex))
+                {
+                    yield return true;
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+            Button.OnInteractEnded();
+            yield return new WaitForSeconds(0.1f);
+        }
+        else
+        {
+            // Hard Way (More Timed Presses)
+            while (!moduleSolved)
+            {
+                // Wait for proper holding time
+                int rule = LogSecondStageRules();
+                if (rule == 1)
+                {
+                    while ((int)Bomb.GetTime() % 7 != 0)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 2)
+                {
+                    while (((int)Bomb.GetTime() % 60) != serialDigitSum)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 3)
+                {
+                    while (((int)Bomb.GetTime() % 10) != Bomb.GetSerialNumberNumbers().Last())
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 4)
+                {
+                    while (((int)Bomb.GetTime() % 60) > 14)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 5)
+                {
+                    while (((int)Bomb.GetTime() % 10) != 2)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 6)
+                {
+                    while (((int)Bomb.GetTime() % 10) != 1 && ((int)Bomb.GetTime() % 10) != 4 && ((int)Bomb.GetTime() % 10) != 6 && ((int)Bomb.GetTime() % 10) != 8 && ((int)Bomb.GetTime() % 10) != 9)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 8)
+                {
+                    while (((int)Bomb.GetTime() % 10) != 0)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if (rule == 9)
+                {
+                    while (((int)Bomb.GetTime() % 10) != 8)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else if ((rule == 10) && (serialDigitSum != 0))
+                {
+                    while (((int)Bomb.GetTime() % serialDigitSum) != 0)
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                Button.OnInteract();
+                yield return new WaitForSeconds(0.1f);
+                // Wait for proper release time
+                if (twoColorsFlash)
+                {
+                    while (!ReleaseRules(newColorIndex) || !ReleaseRules(newColor2Index))
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                else
+                {
+                    while (!ReleaseRules(newColorIndex))
+                    {
+                        yield return true;
+                        yield return new WaitForSeconds(0.1f);
+                    }
+                }
+                Button.OnInteractEnded();
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
     }
 }
