@@ -65,7 +65,7 @@ public class WorldsLargestButton : MonoBehaviour {
     }
 
     // Sets up the initial button
-    private void Start () {
+    private void Start() {
 	    serialDigitSum = Bomb.GetSerialNumberNumbers().Sum();
         GenerateColor(true);
 
@@ -120,6 +120,8 @@ public class WorldsLargestButton : MonoBehaviour {
         SetButtonState(true);
 
         if (moduleSolved == false) {
+            Debug.LogFormat("[The World's Largest Button #{0}] The button was held at {1}.", moduleId, Bomb.GetFormattedTime());
+
             if (stagesCompleted == 0)
                 willStrike = !FirstStageRules();
 
@@ -149,6 +151,8 @@ public class WorldsLargestButton : MonoBehaviour {
         SetButtonState(false);
 
         if (moduleSolved == false) {
+            Debug.LogFormat("[The World's Largest Button #{0}] The button was released at {1}.", moduleId, Bomb.GetFormattedTime());
+
             if (willStrike == false) {
                 // Alert mode
                 if (wasAlertMode == true) {
