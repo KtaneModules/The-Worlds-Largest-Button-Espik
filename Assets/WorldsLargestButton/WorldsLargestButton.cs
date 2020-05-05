@@ -55,6 +55,8 @@ public class WorldsLargestButton : MonoBehaviour {
     private bool twoColorsFlash = false;
     private bool color2Flashing = false;
 
+    private float alertTime = 10.0f;
+
     // Ran as bomb loads
     private void Awake() {
         moduleId = moduleIdCounter++;
@@ -371,7 +373,7 @@ public class WorldsLargestButton : MonoBehaviour {
     // Sets a countdown for the alert
     private IEnumerator StartAlertCountdown() {
         alertModeGood = true;
-        yield return new WaitForSeconds(10.0f);
+        yield return new WaitForSeconds(alertTime);
         alertModeGood = false;
     }
 
@@ -699,6 +701,8 @@ public class WorldsLargestButton : MonoBehaviour {
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
+        alertTime = 60.0f;
+
         string[] parameters = command.Split(' ');
         if (Regex.IsMatch(parameters[0], @"^\s*hold\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
