@@ -10,6 +10,7 @@ public class WorldsLargestButton : MonoBehaviour {
     public KMAudio Audio;
     public KMBombInfo Bomb;
     public KMBombModule Module;
+    public KMColorblindMode ColorblindMode;
     public KMSelectable Button;
 
     public Material[] ColorMaterials;
@@ -19,6 +20,7 @@ public class WorldsLargestButton : MonoBehaviour {
     public Renderer[] ButtonModel;
     public Renderer[] ButtonTextModel;
     public TextMesh[] ButtonText;
+    public TextMesh[] ColorblindTexts;
 
     // Logging info
     private static int moduleIdCounter = 1;
@@ -57,6 +59,12 @@ public class WorldsLargestButton : MonoBehaviour {
 
     private float alertTime = 10.0f;
 
+    private bool state = false;
+    private string currentColor = "White";
+
+    // Colorblind Mode
+    private bool colorblindMode = false;
+
     // Ran as bomb loads
     private void Awake() {
         moduleId = moduleIdCounter++;
@@ -68,7 +76,9 @@ public class WorldsLargestButton : MonoBehaviour {
 
     // Sets up the initial button
     private void Start() {
-	    serialDigitSum = Bomb.GetSerialNumberNumbers().Sum();
+        colorblindMode = ColorblindMode.ColorblindModeActive;
+
+        serialDigitSum = Bomb.GetSerialNumberNumbers().Sum();
         GenerateColor(true);
 
         buttonText = LABELS[UnityEngine.Random.Range(0, LABELS.Length)];
@@ -96,8 +106,13 @@ public class WorldsLargestButton : MonoBehaviour {
     }
 
     // Sets the button state
-    private void SetButtonState(bool state) {
-        if (state == true) {
+    private void SetButtonState(bool newState) {
+        state = newState;
+
+        if (colorblindMode)
+            SetColorblindText(currentColor);
+
+        if (newState == true) {
             ButtonModel[0].enabled = false;
             ButtonModel[1].enabled = true;
             ButtonTextModel[0].enabled = false;
@@ -112,35 +127,47 @@ public class WorldsLargestButton : MonoBehaviour {
         }
     }
 
+    // Sets the colorblind text on the button
+    private void SetColorblindText(string color) {
+        if (state == true) {
+            ColorblindTexts[1].text = color;
+            ColorblindTexts[0].text = "";
+        }
+
+        else {
+            ColorblindTexts[0].text = color;
+            ColorblindTexts[1].text = "";
+        }
+    }
+
 
     // Holding the button
     private void HoldButton() {
         if (ButtonModel[0].enabled == false) return; // Cannot double hold
 
-        Button.AddInteractionPunch(2.5f);
-        PlayButtonSound();
-        SetButtonState(true);
+        if (canHoldButton == true) {
+            Button.AddInteractionPunch(2.5f);
+            PlayButtonSound();
+            SetButtonState(true);
 
-        if (moduleSolved == false) {
-            Debug.LogFormat("[The World's Largest Button #{0}] The button was held at {1}.", moduleId, Bomb.GetFormattedTime());
+            if (moduleSolved == false) {
+                Debug.LogFormat("[The World's Largest Button #{0}] The button was held at {1}.", moduleId, Bomb.GetFormattedTime());
 
-            if (stagesCompleted == 0)
-                willStrike = !FirstStageRules();
+                if (stagesCompleted == 0)
+                    willStrike = !FirstStageRules();
 
-            else if ((int)Bomb.GetTime() % 10 == sound)
-                isEasySolution = true;
+                else if ((int)Bomb.GetTime() % 10 == sound)
+                    isEasySolution = true;
 
-            else
-                willStrike = !SecondStageRules();
+                else
+                    willStrike = !SecondStageRules();
 
-            if (canHoldButton == false)
-                willStrike = true;
+                if (willStrike == true)
+                    Debug.LogFormat("[The World's Largest Button #{0}] The button was held at an invalid time. The module will strike upon releasing.", moduleId);
 
-            if (willStrike == true)
-                Debug.LogFormat("[The World's Largest Button #{0}] The button was held at an invalid time. The module will strike upon releasing.", moduleId);
-
-            if (isUnicorn == false)
-                GenerateHoldButtonColor();
+                if (isUnicorn == false)
+                    GenerateHoldButtonColor();
+            }
         }
     }
 
@@ -164,7 +191,7 @@ public class WorldsLargestButton : MonoBehaviour {
                 else {
                     willStrike = !ReleaseRules(newColorIndex);
 
-                    if (twoColorsFlash == true)
+                    if (twoColorsFlash == true && willStrike == false)
                         willStrike = !ReleaseRules(newColor2Index);
                 }
 
@@ -231,6 +258,10 @@ public class WorldsLargestButton : MonoBehaviour {
     private void GenerateColor(bool firstTime) {
         colorIndex = UnityEngine.Random.Range(0, COLORS.Length);
         SetMaterial(ColorMaterials[colorIndex]);
+        currentColor = COLORS[colorIndex];
+
+        if (colorblindMode)
+            SetColorblindText(COLORS[colorIndex]);
 
         if (firstTime == false)
             Debug.LogFormat("[The World's Largest Button #{0}] The button's color is now {1}.", moduleId, COLORS[colorIndex]);
@@ -256,6 +287,11 @@ public class WorldsLargestButton : MonoBehaviour {
             newColorIndex = UnityEngine.Random.Range(0, COLORS.Length);
             newColor = COLORS[newColorIndex];
             SetMaterial(ColorMaterials[newColorIndex]);
+            currentColor = COLORS[newColorIndex];
+
+            if (colorblindMode)
+                SetColorblindText(COLORS[newColorIndex]);
+
             Debug.LogFormat("[The World's Largest Button #{0}] The held button is now {1}.", moduleId, COLORS[newColorIndex]);
         }
 
@@ -266,6 +302,10 @@ public class WorldsLargestButton : MonoBehaviour {
             newColor = COLORS[newColorIndex];
             newColor2 = COLORS[newColor2Index];
             SetMaterial(ColorMaterials[newColorIndex]);
+            currentColor = COLORS[newColorIndex];
+
+            if (colorblindMode)
+                SetColorblindText(COLORS[newColorIndex]);
 
             // If the two selected colors are the same
             if (newColor == newColor2)
@@ -298,6 +338,10 @@ public class WorldsLargestButton : MonoBehaviour {
         GetComponent<KMBombModule>().HandleStrike();
         canHoldButton = false;
         SetMaterial(StateMaterials[0]);
+        currentColor = "Strike";
+
+        if (colorblindMode)
+            SetColorblindText("Strike");
 
         yield return new WaitForSeconds(1.0f);
 
@@ -318,6 +362,10 @@ public class WorldsLargestButton : MonoBehaviour {
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, gameObject.transform);
         moduleSolved = true;
         SetMaterial(StateMaterials[1]);
+        currentColor = "Solved";
+
+        if (colorblindMode)
+            SetColorblindText("Solved");
     }
 
 
@@ -325,12 +373,22 @@ public class WorldsLargestButton : MonoBehaviour {
     private IEnumerator CycleTwoColors() {
         if (canCycleFlash == true) {
             SetMaterial(ColorMaterials[newColorIndex]);
+            currentColor = COLORS[newColorIndex];
+
+            if (colorblindMode)
+                SetColorblindText(COLORS[newColorIndex]);
+
             color2Flashing = false;
             yield return new WaitForSeconds(0.3f);
         }
 
         if (canCycleFlash == true) {
             SetMaterial(ColorMaterials[newColor2Index]);
+            currentColor = COLORS[newColor2Index];
+
+            if (colorblindMode)
+                SetColorblindText(COLORS[newColor2Index]);
+
             color2Flashing = true;
             yield return new WaitForSeconds(0.3f);
         }
@@ -343,26 +401,51 @@ public class WorldsLargestButton : MonoBehaviour {
     private IEnumerator CycleAlert() {
         if (canCycleFlash == true) {
             SetMaterial(AlertMaterials[0]);
+            currentColor = "Gray";
+
+            if (colorblindMode)
+                SetColorblindText("Gray");
+
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
             SetMaterial(AlertMaterials[1]);
+            currentColor = "Red";
+
+            if (colorblindMode)
+                SetColorblindText("Red");
+
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
             SetMaterial(AlertMaterials[2]);
+            currentColor = "Orange";
+
+            if (colorblindMode)
+                SetColorblindText("Orange");
+
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
             SetMaterial(AlertMaterials[3]);
+            currentColor = "Yellow";
+
+            if (colorblindMode)
+                SetColorblindText("Yellow");
+
             yield return new WaitForSeconds(0.1f);
         }
 
         if (canCycleFlash == true) {
             SetMaterial(AlertMaterials[4]);
+            currentColor = "White";
+
+            if (colorblindMode)
+                SetColorblindText("White");
+
             yield return new WaitForSeconds(0.1f);
         }
 
@@ -697,13 +780,20 @@ public class WorldsLargestButton : MonoBehaviour {
     }
 
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} hold/release XX:XX/X:XX/XX/X [Holds or releases the button at the specified time (XX:XX/#X:XX/##:XX/##:#X)]";
+    private readonly string TwitchHelpMessage = @"!{0} hold/release XX:XX/X:XX/XX/X [Holds or releases the button at the specified time (XX:XX/#X:XX/##:XX/##:#X)] | !{0} colorblind for colorblind mode";
     #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
         alertTime = 60.0f;
 
         string[] parameters = command.Split(' ');
+        if (Regex.IsMatch(parameters[0], @"^\s*colorblind\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) { // this regex needs fixing
+            colorblindMode = true;
+            SetColorblindText(currentColor);
+            yield return null;
+            yield break;
+        }
+
         if (Regex.IsMatch(parameters[0], @"^\s*hold\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             yield return null;
