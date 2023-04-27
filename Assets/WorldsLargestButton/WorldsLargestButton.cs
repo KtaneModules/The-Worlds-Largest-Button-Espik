@@ -96,6 +96,7 @@ public class WorldsLargestButton : MonoBehaviour {
         Debug.LogFormat("[The World's Largest Button #{0}] Rule {1} from Step 1 applies.", moduleId, LogFirstStageRules());
 
         sound = UnityEngine.Random.Range(0, 10);
+        Debug.LogFormat("[The World's Largest Button #{0}] The sound the button will make is \"{1}\".", moduleId, LogButtonSound());
     }
 
     
